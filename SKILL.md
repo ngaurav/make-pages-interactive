@@ -116,6 +116,18 @@ Strips both tags from every `*.html`. Leaves the `feedback/` directory alone (de
     └── update.py         # git pull --ff-only
 ```
 
+## Table rendering (auto-applied)
+
+`feedback.js` automatically enhances every `<table>` on any served page. No markup changes needed.
+
+| Feature | What it does |
+|---|---|
+| **Horizontal scroll** | Wraps table in `.cf-table-wrap` so wide tables scroll instead of overflowing |
+| **Sticky first column** | First `td`/`th` stays visible while scrolling right; background auto-detected to match the page theme |
+| **Sortable columns** | Click any `<th>` in a `<thead>` to sort ↑/↓; handles numbers (including K/M suffixes), text, and mixed content |
+
+Tables inside `#claude-feedback-root` are skipped. Enhancement is idempotent.
+
 ## Gotchas
 
 - The injected `<link>` and `<script>` reference absolute paths `/lib/feedback.css` and `/lib/feedback.js`. These resolve through `server.py`, which routes `/lib/*` to the skill's own `lib/` directory. So pages only work when opened through this server — opening the HTML file directly in a browser will silently fail to load the feedback widget (the page itself still renders).

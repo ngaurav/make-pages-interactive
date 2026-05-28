@@ -4,6 +4,8 @@ A Claude Code skill that turns any folder of static HTML pages into a **live com
 
 Originally built for iterating on research artifacts (long HTML reports with plots, tables, explanations) but works for any folder of HTML: docs, design mocks, generated reports, prototype UIs.
 
+> **Fork:** This is a fork of [paraschopra/make-pages-interactive](https://github.com/paraschopra/make-pages-interactive) by [Paras Chopra](https://github.com/paraschopra), with added **table rendering** — proportional column widths, sortable headers, and sticky first-column support, automatically applied to every table on served pages.
+
 ![Screenshot of make-pages-interactive in action](screenshot.png)
 
 ---
@@ -54,7 +56,7 @@ Plus glue:
 ## Install
 
 ```bash
-git clone https://github.com/paraschopra/make-pages-interactive \
+git clone https://github.com/ngaurav/make-pages-interactive \
   ~/.claude/skills/make-pages-interactive
 ```
 

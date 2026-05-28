@@ -611,3 +611,49 @@ body.cf-elem-mode {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* ---------------- Table rendering (auto-applied to all page tables) ---------------- */
+
+/* Tables sit at full container width — no scroll wrapper.
+   With table-layout:fixed, overflow:hidden is required to keep cell
+   content inside its column boundary; text wraps rather than overflows. */
+table[data-cf-table-enhanced] td,
+table[data-cf-table-enhanced] th {
+  overflow: hidden;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  white-space: normal !important; /* override host-page nowrap */
+}
+
+/* Sortable column headers */
+.cf-sortable thead th {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: opacity 0.1s ease;
+}
+.cf-sortable thead th:hover { opacity: 0.75; }
+.cf-sortable thead th.cf-sort-asc::after  { content: " ↑"; font-size: 0.78em; opacity: 0.55; }
+.cf-sortable thead th.cf-sort-desc::after { content: " ↓"; font-size: 0.78em; opacity: 0.55; }
+
+/* Sticky first column — background resolved at runtime via --cf-sticky-bg */
+.cf-sticky-col td:first-child,
+.cf-sticky-col th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--cf-sticky-bg, inherit);
+}
+/* Hair-line shadow to the right of the sticky column */
+.cf-sticky-col td:first-child::after,
+.cf-sticky-col th:first-child::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -5px;
+  width: 5px;
+  height: 100%;
+  background: linear-gradient(to right, rgba(0,0,0,0.07), transparent);
+  pointer-events: none;
+}
