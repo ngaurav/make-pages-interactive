@@ -1,11 +1,13 @@
 ---
 name: make-pages-interactive
-description: Turn a directory of static HTML pages into a live commenting surface. Injects a feedback library, starts a tiny server, and routes user comments into a JSONL inbox that the agent monitors and responds to by editing the pages. Trigger phrases — "make this page interactive", "make these pages interactive", "let me comment on this page", "add feedback to these pages".
+description: Turn static HTML pages into a live commenting surface that any coding agent can monitor and update. Use when the user asks to make pages interactive, comment on a page, set up inline feedback, stop its local server, or remove the feedback layer.
 ---
 
 # Make Pages Interactive
 
-Turns any folder of HTML files into a place the user can leave inline comments on (text selections, element selections, page-level notes). Comments POST to a local JSONL inbox; you (the agent) Monitor that inbox, edit the HTML in response, append to `feedback/history.json`, and the page auto-reloads with a walkthrough of what changed.
+Turns any folder of HTML files into a place where the user can leave inline comments on text selections, elements, or the whole page. Comments POST to a local JSONL inbox. The coding agent watches that inbox, edits the HTML in response, appends to `feedback/history.json`, and the page auto-reloads with a walkthrough of what changed.
+
+This skill is agent-agnostic. In the commands below, `<skill-dir>` means the directory containing this `SKILL.md`. Resolve it from the skill location supplied by the host agent; do not assume a Claude Code, Codex, or other provider-specific install path.
 
 ## When to invoke
 
@@ -22,7 +24,7 @@ User says any of:
 1. **Identify the target directory.** Usually the user's current working directory or a folder they named. If ambiguous, ask.
 2. **Inject the feedback tags** into every `*.html` in that directory:
    ```
-   python ~/.claude/skills/make-pages-interactive/scripts/inject.py <dir>
+   python <skill-dir>/scripts/inject.py <dir>
    ```
    Add `--recursive` if the pages live in subfolders. The script is idempotent — safe to re-run. It also creates `<dir>/feedback/inbox.jsonl` and `<dir>/feedback/history.json` if missing.
 3. **Pick a port.** Default 5050. Before starting, check what's there:
@@ -32,17 +34,17 @@ User says any of:
    - JSON with `artifact_dir` matching this `<dir>` → reuse it, skip to step 5.
    - JSON with a *different* `artifact_dir` → port is held by another exploration. Either ask the user to free it (`lsof -ti:5050 | xargs kill`) or use port 5051, 5052, … (try the next port; tell the user the URL).
    - No response → port 5050 is free.
-4. **Start the server in the background** via Bash with `run_in_background: true`:
+4. **Start the server as a long-running background process** using the host agent's shell/process facility:
    ```
-   python ~/.claude/skills/make-pages-interactive/lib/server.py <dir> --port <chosen>
+   python <skill-dir>/lib/server.py <dir> --port <chosen>
    ```
    The server auto-shuts-down on parent death or 10 min of idle, so you don't need to manage its lifecycle.
 5. **Tell the user the URL.** For example: `http://localhost:5050/index.html` (use whatever filename they actually have — `index.html`, `report.html`, etc.). If they have multiple pages, list the top-level ones.
-6. **Start a Monitor on the inbox** so new comments notify you immediately:
+6. **Start a Monitor on the inbox** so new comments notify the agent immediately:
    ```
    Monitor on path: <dir>/feedback/inbox.jsonl
    ```
-   Do NOT poll — let the Monitor notification arrive.
+   Do not poll; let the Monitor notification arrive.
 
 ## Responding to a feedback batch
 
@@ -87,21 +89,21 @@ If you find `<dir>/feedback/inbox.jsonl` and `<dir>/feedback/history.json` and t
 1. Scan inbox for comment ids.
 2. Scan history's `changes[*].in_response_to` union — those are already processed.
 3. If unprocessed comments exist, tell the user the count and ask whether to process now.
-4. Either way, set up the Monitor on the inbox.
+4. Either way, start a Monitor on the inbox.
 
 ## Stop flow (user wants to kill the server)
 
 1. Identify the port. If you started the server in this session, you know it. Otherwise check `curl -s http://localhost:5050/info` (try 5051, 5052 if 5050 returns nothing or a different artifact).
 2. Kill it: `lsof -ti:<port> | xargs kill` (use `kill -9` only if a plain kill doesn't free the port within a few seconds — the server traps SIGTERM and exits cleanly).
 3. Confirm: `lsof -i :<port>` should be silent.
-4. If you also started a `Monitor` on the inbox in this session, it will keep watching the file — that's fine, the file just won't get new entries.
+4. If you also started a Monitor on the inbox in this session, it can remain active; the file will not receive new entries while the server is stopped.
 
-Note: in most cases the user doesn't need to manually stop the server. It auto-shuts-down when (a) the parent process dies (e.g. they close the Claude Code window — within ~5–10 s) or (b) no client requests for 10 min. Manual stop is for the case where they want the port back *right now* in the same session.
+Note: in most cases the user does not need to stop the server manually. It auto-shuts down when its parent agent process dies (usually within 5–10 seconds) or after 10 minutes without client requests. Manual stop is for reclaiming the port immediately.
 
 ## Update flow (user wants the latest lib/)
 
 ```
-python ~/.claude/skills/make-pages-interactive/scripts/update.py
+python <skill-dir>/scripts/update.py
 ```
 Runs `git pull --ff-only` inside the skill dir. Requires git-clone install (the script tells the user how to re-install if not).
 
@@ -109,14 +111,14 @@ Runs `git pull --ff-only` inside the skill dir. Requires git-clone install (the 
 
 If the user wants their HTML back to a clean, server-independent state:
 ```
-python ~/.claude/skills/make-pages-interactive/scripts/inject.py <dir> --remove
+python <skill-dir>/scripts/inject.py <dir> --remove
 ```
 Strips both tags from every `*.html`. Leaves the `feedback/` directory alone (delete manually if not wanted).
 
 ## Files in this skill
 
 ```
-~/.claude/skills/make-pages-interactive/
+<skill-dir>/
 ├── SKILL.md              # this file (agent-facing)
 ├── README.md             # GitHub-facing docs (human readers)
 ├── LICENSE
@@ -139,7 +141,7 @@ Strips both tags from every `*.html`. Leaves the `feedback/` directory alone (de
 | **Sticky first column** | First `td`/`th` stays visible while scrolling right; background auto-detected to match the page theme |
 | **Sortable columns** | Click any `<th>` in a `<thead>` to sort ↑/↓; handles numbers (including K/M suffixes), text, and mixed content |
 
-Tables inside `#claude-feedback-root` are skipped. Enhancement is idempotent.
+Tables inside the feedback UI root (`#claude-feedback-root`) are skipped. Enhancement is idempotent.
 
 ## Gotchas
 
