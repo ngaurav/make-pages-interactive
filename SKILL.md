@@ -83,6 +83,19 @@ To clear an entry early, POST the same `comment_id` with `message: null` or `""`
 
 `history.json` remains the source of truth for "done" — the status message is decoration only. The banner clears the moment a matching batch lands in `history.json`, regardless of whether you cleared the status entry.
 
+## WYSIWYG guidance for print-oriented pages
+
+Apply this guidance when the target is a resume, report, handout, or other page intended to match a printed document. Do not impose fixed-page styling on ordinary web pages.
+
+- Treat the HTML and its print stylesheet as the visual source of truth: edit, refresh in Chromium/Chrome, then use **Print → Save as PDF** for the closest WYSIWYG loop.
+- When content must remain reusable or version-friendly, keep it in a separate Markdown source and use HTML/CSS only for presentation. Include only publishable document content; omit drafting notes, tailoring notes, and other author-only sections unless the user explicitly requests them.
+- Match the intended physical format with print units. For A4, use `@page { size: A4; margin: ...; }`, size the page shell in `mm`, and use `pt` or `mm` for typography and spacing where print fidelity matters.
+- Add `@media print` rules to remove screen-only UI, shadows, and feedback controls. At minimum, hide `#claude-feedback-root` and any other injected overlays with `display: none !important`.
+- Use `break-inside: avoid` / `page-break-inside: avoid` for cohesive blocks such as experience entries, figures, and tables. Use explicit page breaks only where the document structure requires them.
+- Prefer an available webfont that closely matches the source document, with sensible local sans-serif or serif fallbacks. Ensure the chosen font is loaded before judging line wrapping or exporting.
+- Validate in Chromium/Chrome because its print rendering is the expected reference. Confirm paper size, margins, page count, clipping, overflow, and section breaks; disable browser-added headers and footers when exporting.
+- Preserve screen usability: center the physical page on a neutral canvas, allow responsive scaling or horizontal scrolling on narrow viewports, and keep the unprinted interactive layer usable.
+
 ## On startup in a directory that already has feedback
 
 If you find `<dir>/feedback/inbox.jsonl` and `<dir>/feedback/history.json` and the skill has been invoked in this session:
