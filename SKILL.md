@@ -34,11 +34,11 @@ User says any of:
    - JSON with `artifact_dir` matching this `<dir>` → reuse it, skip to step 5.
    - JSON with a *different* `artifact_dir` → port is held by another exploration. Either ask the user to free it (`lsof -ti:5050 | xargs kill`) or use port 5051, 5052, … (try the next port; tell the user the URL).
    - No response → port 5050 is free.
-4. **Start the server as a long-running background process** using the host agent's shell/process facility:
+4. **Start the server as a long-running background process** using the host agent's persistent-background-process primitive (e.g. Claude Code's Bash tool with `run_in_background: true`):
    ```
    python <skill-dir>/lib/server.py <dir> --port <chosen>
    ```
-   The server auto-shuts-down on parent death or 10 min of idle, so you don't need to manage its lifecycle.
+   Do not launch it with shell-level backgrounding alone (`nohup ... & disown`, `setsid`, etc.) — each tool-invoked shell is itself a short-lived process, and the server's parent-death detection will shut it down the moment that invocation returns. `setsid` is also unavailable on macOS. Use the host's actual persistent-process facility so the server's parent stays alive for the session. The server auto-shuts-down on parent death or 10 min of idle, so beyond that you don't need to manage its lifecycle.
 5. **Tell the user the URL.** For example: `http://localhost:5050/index.html` (use whatever filename they actually have — `index.html`, `report.html`, etc.). If they have multiple pages, list the top-level ones.
 6. **Start a Monitor on the inbox** so new comments notify the agent immediately:
    ```
